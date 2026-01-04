@@ -12,6 +12,23 @@ import { StatsOverview } from "@/components/stats-overview"
 import Image from "next/image"
 import { createClient } from "@/lib/supabase/client"
 import { Input } from "@/components/ui/input"
+import { ObjectiveBreakdown } from "@/components/ObjectiveBreakdown";
+import { StudySessionStart } from "@/components/StudySessionStart";
+import { ActivityHeatmap } from "@/components/ActivityHeatmap";[[1](https://www.google.com/url?sa=E&q=https%3A%2F%2Fgithub.com%2FSudhishKoonja%2FStudyTracker)]
+
+export default function Dashboard() {
+  return (
+    <div className="p-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="space-y-6">
+        <StudySessionStart />
+        <ObjectiveBreakdown />
+      </div>
+      <div>
+        <ActivityHeatmap />
+      </div>
+    </div>
+  );
+}
 
 export interface Objective {
   id: string
