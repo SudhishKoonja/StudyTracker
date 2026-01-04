@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useState, useEffect } from "react"
-import { Plus, Moon, Sun, ExternalLink, BookOpen, Lock } from "lucide-react"
+import { Plus, Moon, Sun, ExternalLink, BookOpen, Lock, Search, Play } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ObjectiveCard } from "@/components/objective-card"
 import { AddObjectiveDialog } from "@/components/add-objective-dialog"
@@ -12,23 +12,7 @@ import { StatsOverview } from "@/components/stats-overview"
 import Image from "next/image"
 import { createClient } from "@/lib/supabase/client"
 import { Input } from "@/components/ui/input"
-import { ObjectiveBreakdown } from "@/components/ObjectiveBreakdown";
-import { StudySessionStart } from "@/components/StudySessionStart";
-import { ActivityHeatmap } from "@/components/ActivityHeatmap";[[1](https://www.google.com/url?sa=E&q=https%3A%2F%2Fgithub.com%2FSudhishKoonja%2FStudyTracker)]
-
-export default function Dashboard() {
-  return (
-    <div className="p-8 grid grid-cols-1 md:grid-cols-3 gap-6">
-      <div className="space-y-6">
-        <StudySessionStart />
-        <ObjectiveBreakdown />
-      </div>
-      <div>
-        <ActivityHeatmap />
-      </div>
-    </div>
-  );
-}
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 
 export interface Objective {
   id: string
@@ -51,6 +35,7 @@ export default function Home() {
   const [isUnlocked, setIsUnlocked] = useState(false)
   const [pinInput, setPinInput] = useState("")
   const [pinError, setPinError] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("")
   const supabase = createClient()
 
   useEffect(() => {
@@ -351,6 +336,13 @@ export default function Home() {
     }
   }, [isUnlocked, isLoading])
 
+  const filteredObjectives = objectives.filter(
+    (obj) =>
+      obj.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      obj.subject?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      obj.chapter?.toLowerCase().includes(searchQuery.toLowerCase()),
+  )
+
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -550,16 +542,69 @@ export default function Home() {
               </div>
             </div>
           ) : (
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {objectives.map((objective) => (
-                <ObjectiveCard
-                  key={objective.id}
-                  objective={objective}
-                  onStartStudy={() => setSelectedObjective(objective)}
-                  onUpdate={(updates) => updateObjective(objective.id, updates)}
-                  onDelete={() => deleteObjective(objective.id)}
-                />
-              ))}
+            <div className="space-y-6">
+              <div className="flex items-center gap-4">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    placeholder="Search objectives by name, subject, or chapter..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="h-12 pl-10 text-base"
+                  />
+                </div>
+              </div>
+
+              {searchQuery && filteredObjectives.length > 0 && (
+                <Card className="border-primary/20 bg-primary/5">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-base">
+                      <Play className="h-5 w-5 text-primary" />
+                      Quick Start
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      {filteredObjectives.slice(0, 5).map((obj) => (
+                        <button
+                          key={obj.id}
+                          onClick={() => setSelectedObjective(obj)}
+                          className="flex w-full items-center justify-between rounded-lg border border-border/50 bg-background/50 p-3 text-left transition-all hover:border-primary/50 hover:bg-primary/5"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="h-3 w-3 rounded-full" style={{ backgroundColor: obj.color }} />
+                            <div>
+                              <p className="font-medium">{obj.title}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {obj.currentHours.toFixed(1)}h / {obj.targetHours}h
+                              </p>
+                            </div>
+                          </div>
+                          <Play className="h-4 w-4 text-muted-foreground" />
+                        </button>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {(searchQuery ? filteredObjectives : objectives).map((objective) => (
+                  <ObjectiveCard
+                    key={objective.id}
+                    objective={objective}
+                    onStartStudy={() => setSelectedObjective(objective)}
+                    onUpdate={(updates) => updateObjective(objective.id, updates)}
+                    onDelete={() => deleteObjective(objective.id)}
+                  />
+                ))}
+              </div>
+
+              {searchQuery && filteredObjectives.length === 0 && (
+                <div className="rounded-lg border-2 border-dashed border-border/60 bg-muted/30 p-12 text-center">
+                  <p className="text-muted-foreground">No objectives found matching "{searchQuery}"</p>
+                </div>
+              )}
             </div>
           )}
         </div>
